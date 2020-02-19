@@ -48,7 +48,9 @@
     </a>
 
     <div class="vboardPin--tags t-color-black--text t-font-secondary2 t-fontSize-x-small text-center">
-        <span data-ng-repeat="tag in tags(pin) track by $id(tag)"><a class="link-notUnderlined t-color-lightblack--text" data-ng-href="#/?label={{ encode(tag) }}">{{ tag }} &nbsp;</a></span>
+        <span data-ng-repeat="tag in tags(pin) track by $id(tag)">
+            <a class="link-notUnderlined t-color-lightblack--text" data-ng-href="#/?label={{ encode(tag) }}">{{ '#'+tag }} &nbsp;</a>
+        </span>
     </div>
 
     <div class="vboardPin--interaction">
