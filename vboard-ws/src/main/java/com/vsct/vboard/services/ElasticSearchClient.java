@@ -19,6 +19,7 @@
 package com.vsct.vboard.services;
 
 import com.vsct.vboard.config.ElasticSearchClientConfig;
+import com.vsct.vboard.models.Label;
 import com.vsct.vboard.models.Pin;
 import com.vsct.vboard.models.VBoardException;
 import com.vsct.vboard.utils.ValidatorUtils;
@@ -26,11 +27,7 @@ import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.client.http.JestHttpClient;
-import io.searchbox.core.Delete;
-import io.searchbox.core.Index;
-import io.searchbox.core.Search;
-import io.searchbox.core.SearchResult;
-import io.searchbox.core.Update;
+import io.searchbox.core.*;
 import io.searchbox.core.search.sort.Sort;
 import io.searchbox.params.Parameters;
 import org.apache.commons.lang3.StringUtils;
@@ -41,9 +38,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class ElasticSearchClient {
@@ -83,7 +81,7 @@ public class ElasticSearchClient {
         List<Sort> sortList = new LinkedList<>();
         sortList.add(sort);
         List<HashMap> items = this.search(query, this.elsConfig.getPinsIndex(), sortList, offset);
-        return items.stream().map(this::jsonMapToPin).collect(Collectors.toList());
+        return items.stream().map(this::jsonMapToPin).collect(toList());
     }
 
     /**
@@ -131,7 +129,7 @@ public class ElasticSearchClient {
         Sort sort = new Sort("post_date_utc", Sort.Sorting.DESC);
         sortList.add(sort);
         List<HashMap> items = this.search(query, this.elsConfig.getPinsIndex(), sortList, 0);
-        return items.stream().map(this::jsonMapToPin).collect(Collectors.toList());
+        return items.stream().map(this::jsonMapToPin).collect(toList());
     }
 
     /**
@@ -144,7 +142,7 @@ public class ElasticSearchClient {
         String query = getSearchPinsQuerybyId(pinId);
         List<Sort> sortList = new LinkedList<>();
         List<HashMap> items = this.search(query, this.elsConfig.getPinsIndex(), sortList, 0);
-        return items.stream().map(this::jsonMapToPin).collect(Collectors.toList());
+        return items.stream().map(this::jsonMapToPin).collect(toList());
     }
 
     public void deletePin(String pinId) {
@@ -231,6 +229,11 @@ public class ElasticSearchClient {
     }
 
     private String getSearchPinsQuery(String text, List<String> labels, String from) {
+        List<String> normalizeLabels = labels.stream()
+                .map(Label::new)
+                .map(Label::getLabelName)
+                .collect(toList());
+
         text = text.toLowerCase();
         // Search field full text
         String searchTextMultiFieldsShould = "";
@@ -245,14 +248,14 @@ public class ElasticSearchClient {
                     + "\"wildcard\": { \"pin_title\": \"*" + text + "*\" }"
                 + "} ], \"minimum_should_match\" : 1";
         }
-        if (!labels.isEmpty()) {
+        if (!normalizeLabels.isEmpty()) {
             if (!searchTextMultiFieldsShould.isEmpty()) {
                 searchTagsMust = ", ";
             }
             // The request in a "OR": we get all pins having any of the labels provided
-            searchTagsMust += "\"must\": [ {" + labels.stream().map(label ->
+            searchTagsMust += "\"must\": [ {" + normalizeLabels.stream().map(label ->
                     "\"wildcard\" : {\"labels.keyword\": \"*" + label.toLowerCase() + "*\"}"
-            ).collect(Collectors.joining(" }, {")) + "} ]";
+            ).collect(joining(" }, {")) + "} ]";
         }
         if (from != null && !from.isEmpty()) {
             if (!searchTextMultiFieldsShould.isEmpty() || !searchTagsMust.isEmpty()) {
@@ -353,7 +356,7 @@ public class ElasticSearchClient {
     public List<HashMap> getResponseAsList(SearchResult elsResult) {
         return elsResult.getHits(HashMap.class).stream()
                 .map(hit -> hit.source)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     private Pin jsonMapToPin(HashMap jsonMap) {

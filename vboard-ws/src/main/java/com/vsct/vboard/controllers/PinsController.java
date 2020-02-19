@@ -23,7 +23,8 @@ import com.vsct.vboard.config.ProxyConfig;
 import com.vsct.vboard.exceptions.DuplicateContentException;
 import com.vsct.vboard.models.*;
 import com.vsct.vboard.parameterFormat.AddNewPinParams;
-import com.vsct.vboard.services.*;
+import com.vsct.vboard.services.ElasticSearchClient;
+import com.vsct.vboard.services.UploadsManager;
 import com.vsct.vboard.utils.JavaUtils;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jettison.json.JSONException;
@@ -223,10 +224,7 @@ public class PinsController {
         }
 
         String description = params.getDescription();
-        String[] labels = params.getLabels();
-        String strLabels = labels == null || labels.length == 0 ? "" : Arrays.stream(params.getLabels())
-                .map(label -> label.startsWith("#") ? label : "#" + label)
-                .collect(Collectors.joining(","));
+        String strLabels = new Labels(params.getLabels()).toString();
         String author = params.getAuthor();
         permission.ensureNewEntityAuthorMatchesSessionUser(author); // Check if the author given is effectively the one that posted the pin
         DateTime postDateUTC = new DateTime(DateTimeZone.UTC);
@@ -281,6 +279,7 @@ public class PinsController {
         if (!this.isMediaInternetImage(imgType)) {
             imgType = null;
         }
+        //TODO remove ?
         if (isNotBlank(labels)) {
             labels = "#" + labels;
         }
@@ -338,8 +337,8 @@ public class PinsController {
         pin.setHrefUrl(params.getUrl());
 
         pin.setIndexableTextContent(params.getDescription());
-        String[] labels = params.getLabels();
-        String strLabels = labels == null || labels.length == 0 ? "" : String.join(",", labels);
+
+        String strLabels = new Labels(params.getLabels()).toString();
         pin.setLabels(strLabels);
         if (this.isMediaBase64Image(params.getImgType())) {
             String nasURL = "/pinImg/" + pin.getPinId() + ".png";

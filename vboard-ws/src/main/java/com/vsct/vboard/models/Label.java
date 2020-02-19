@@ -28,6 +28,9 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.Pattern;
+import java.text.Normalizer;
+
+import static java.text.Normalizer.Form.NFD;
 
 @Entity
 @Table(name = "labels")
@@ -43,7 +46,13 @@ public class Label {
     }
 
     public Label(String labelName) {
-        this.labelName = labelName;
+        final String nonASCII = "[^\\p{ASCII}]";
+        final String specialCharacter = "[^a-zA-Z0-9\\s+]";
+        this.labelName = Normalizer
+                .normalize(labelName, NFD)
+                .replaceAll(nonASCII, "")
+                .replaceAll(specialCharacter, "")
+                .toLowerCase().trim();
     }
 
     public String getLabelName() {
