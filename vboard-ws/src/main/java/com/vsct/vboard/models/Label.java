@@ -46,6 +46,11 @@ public class Label {
     }
 
     public Label(String labelName) {
+        if (labelName == null) {
+            this.labelName = null;
+            return;
+        }
+
         final String nonASCII = "[^\\p{ASCII}]";
         final String specialCharacter = "[^a-zA-Z0-9\\s+]";
         this.labelName = Normalizer
