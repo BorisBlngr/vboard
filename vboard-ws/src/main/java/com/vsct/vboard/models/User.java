@@ -179,7 +179,7 @@ public class User implements Diffable<User>, Profil, Serializable {
     }
 
     public String getFavoriteLabels() {
-        return favoriteLabels;
+        return new Label(this.favoriteLabels).getLabelName();
     }
 
     public void setFavoriteLabels(final String favoriteLabels) {

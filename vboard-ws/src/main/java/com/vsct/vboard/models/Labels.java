@@ -38,6 +38,12 @@ public class Labels {
                         .collect(toList()));
     }
 
+    List<String> toStringList() {
+        return labels.stream()
+                .map(Label::getLabelName)
+                .collect(toList());
+    }
+
     @Override
     public String toString() {
         return this.labels.stream()

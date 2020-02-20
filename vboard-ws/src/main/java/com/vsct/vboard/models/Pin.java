@@ -33,7 +33,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -144,7 +143,7 @@ public class Pin {
         if (isBlank(labels)) {
             return Collections.emptyList();
         }
-        return Arrays.asList(labels.split(","));
+        return new Labels(labels.split(",")).toStringList();
     }
 
     @JsonIgnore
